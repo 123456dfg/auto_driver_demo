@@ -1,0 +1,10 @@
+/**:
+  ros__parameters:
+    detector:
+      device_type: "CPU"
+
+      traffic_sign: 
+        model_path: "package://resource/models/traffic_sign_model/best.xml"
+        metadata_path: "package://resource/models/traffic_sign_model/metadata.yaml"
+        confidence_threshold: 0.6
+

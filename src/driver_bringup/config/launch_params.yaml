@@ -1,0 +1,3 @@
+use_video: true 
+use_virtual_serial: true
+namespace: ""

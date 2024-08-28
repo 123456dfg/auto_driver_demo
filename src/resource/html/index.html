@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-top: 20px;
+        }
+        h2{
+            color: #ffffff;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            margin-top: 40px;
+        }
+
+        /* 定义父容器的样式 */
+        #video-container {
+            width: 640px;
+            /* 容器的宽度 */
+            margin: 0 auto;
+            /* 居中对齐 */
+            border: 2px solid #333;
+            /* 边框 */
+            overflow: hidden;
+            /* 如果视频超出容器，将其隐藏 */
+            flex-direction: column;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 定义视频的样式 */
+        #ros-image {
+            width: 100%;
+            /* 视频宽度自动适应容器 */
+            height: 480px;
+            /* 设定固定高度 */
+        }
+
+        .control-buttons {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .control-buttons button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        .control-buttons button:hover {
+            background-color: #2980b9;
+        }
+
+        .link-container {
+            margin-top: 20px;
+            color: white;
+        }
+
+        .link-container a {
+            color: red;
+            text-decoration: none;
+        }
+
+        .link-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1.3.0/build/roslib.js"></script>
+</head>
+
+<body>
+    <h1>ROS2 Web Driver Controller</h1>
+
+    <div class="container">
+        <!-- 图片流和链接放在左边 -->
+        <div id="video-container">
+            <!-- 用于显示视频流的 img 标签 -->
+            <img id="ros-image" alt="ROS2 CompressedImage Stream">
+            <!-- 链接放在图像下方 -->
+            <div class="link-container">
+                <a href="http://192.168.110.114:8080/stream?topic=/image_raw">Click here to view the image_raw</a>
+            </div>
+        </div>
+
+        <!-- 按钮放在右边 -->
+        <div class="control-buttons">
+            <h2 style=>control area</h2>
+            <div>
+                <button onclick="moveForward()">Forward</button>
+                <button onclick="moveBackward()">Backward</button>
+            </div>
+            <div>
+                <button onclick="moveLeft()">Left</button>
+                <button onclick="stopMovement()">Stop</button>
+                <button onclick="moveRight()">Right</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ros;
+        let cmdVel;
+        let imageListener;
+
+        function startConnection() {
+            ros = new ROSLIB.Ros({
+                url: 'ws://192.168.110.114:9090'
+            });
+
+            ros.on('connection', () => {
+                console.log('Connected to ROS Bridge');
+                cmdVel = new ROSLIB.Topic({
+                    ros: ros,
+                    name: '/cmd_vel',
+                    messageType: 'geometry_msgs/Twist'
+                });
+                imageListener = new ROSLIB.Topic({
+                    ros: ros,
+                    name: '/image_raw/compressed',
+                    messageType: 'sensor_msgs/CompressedImage'
+                });
+                imageListener.subscribe(function (message) {
+                    // 将图像数据解码为base64字符串
+                    var imageSrc = 'data:image/jpeg;base64,' + message.data;
+
+                    // 获取img元素
+                    var img = document.getElementById('ros-image');
+                    img.src = imageSrc;
+                });
+            });
+
+            ros.on('error', (error) => {
+                console.error('Error connecting to ROS: ', error);
+                alert('Error connecting to ROS: 9090', error);
+            });
+
+            ros.on('close', () => {
+                console.log('Disconnected from ROS');
+                alert('Disconnected from ROS');
+            });
+        }
+
+        function move(direction) {
+            if (!ros) {
+                console.error('ROS connection not established');
+                alert('ROS connection not established');
+                return;
+            }
+
+            if (!cmdVel) {
+                console.error('Publisher not created');
+                alert('Publisher not created');
+                return;
+            }
+
+            const twist = new ROSLIB.Message({
+                linear: {
+                    x: direction.linear.x,
+                    y: direction.linear.y,
+                    z: direction.linear.z
+                },
+                angular: {
+                    x: direction.angular.x,
+                    y: direction.angular.y,
+                    z: direction.angular.z
+                }
+            });
+
+            cmdVel.publish(twist);
+        }
+
+        function moveForward() {
+            const moveForwardMsg = {
+                linear: { x: 0.2, y: 0, z: 0 },
+                angular: { x: 0, y: 0, z: 0 }
+            };
+            move(moveForwardMsg);
+        }
+
+        function moveBackward() {
+            const moveBackwardMsg = {
+                linear: { x: -0.2, y: 0, z: 0 },
+                angular: { x: 0, y: 0, z: 0 }
+            };
+            move(moveBackwardMsg);
+        }
+
+        function moveLeft() {
+            const moveLeftMsg = {
+                linear: { x: 0, y: 0.0, z: 0 },
+                angular: { x: 0, y: 0, z: 0.5 }
+            };
+            move(moveLeftMsg);
+        }
+
+        function moveRight() {
+            const moveRightMsg = {
+                linear: { x: 0, y: 0, z: 0 },
+                angular: { x: 0, y: 0, z: -0.5 }
+            };
+            move(moveRightMsg);
+        }
+
+        function stopMovement() {
+            const stopMsg = {
+                linear: { x: 0, y: 0, z: 0 },
+                angular: { x: 0, y: 0, z: 0 }
+            };
+            move(stopMsg);
+        }
+
+        startConnection(); // 初始化ROS连接
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,26 @@
+image_width: 1440
+image_height: 1080
+camera_name: video_driver
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1799.45298,    0.     ,  727.93641,
+            0.     , 1797.29355,  584.03416,
+            0.     ,    0.     ,    1.     ]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.086123, 0.144052, 0.000416, -0.000372, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1., 0., 0.,
+         0., 1., 0.,
+         0., 0., 1.]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1781.00072,    0.     ,  727.71369,    0.     ,
+            0.     , 1785.05934,  584.73018,    0.     ,
+            0.     ,    0.     ,    1.     ,    0.     ]
